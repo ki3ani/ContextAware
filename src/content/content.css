@@ -1,0 +1,76 @@
+/**
+ * Content Script Styles for ContextAware Extension
+ * These styles are injected into every webpage
+ */
+
+/* Floating Action Button */
+.contextaware-fab {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2147483646; /* Just below sidebar */
+  transition: all 0.3s ease;
+  font-size: 24px;
+}
+
+.contextaware-fab:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+}
+
+.contextaware-fab.active {
+  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+}
+
+.contextaware-fab.has-selection {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    box-shadow: 0 4px 12px rgba(245, 87, 108, 0.4);
+  }
+  50% {
+    box-shadow: 0 4px 20px rgba(245, 87, 108, 0.8);
+  }
+}
+
+/* Sidebar iframe */
+.contextaware-sidebar {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 400px;
+  height: 100vh;
+  border: none;
+  z-index: 2147483647; /* Maximum z-index */
+  box-shadow: -4px 0 16px rgba(0, 0, 0, 0.1);
+  transform: translateX(100%);
+  transition: transform 0.3s ease-in-out;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .contextaware-sidebar {
+    width: 100%;
+  }
+
+  .contextaware-fab {
+    bottom: 16px;
+    right: 16px;
+    width: 48px;
+    height: 48px;
+  }
+}
