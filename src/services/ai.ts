@@ -2,54 +2,58 @@
  * AI Service for ContextAware Extension
  *
  * This module provides a unified interface for interacting with Chrome's AI APIs:
- * - Local AI: Chrome AI Summarization API (Gemini Nano) for fast, on-device processing
- * - Cloud AI: Chrome Cloud AI API (Gemini 1.5 Pro) for deeper reasoning and analysis
+ * - Summarizer API: Chrome AI Summarization API (Gemini Nano) for fast, on-device summarization
+ * - Prompt API: Chrome AI Prompt API (Gemini Nano) for deeper reasoning and analysis
  *
- * TODO: Replace placeholder implementations with actual Chrome AI API calls
+ * Both APIs are available in Chrome 138+ stable.
+ * Learn more: https://developer.chrome.com/docs/ai/built-in-apis
  */
 
-import type { AIMode, SummarizeRequest, SummarizeResponse } from '@/types';
+import type { SummarizeRequest, SummarizeResponse } from '@/types';
 
 export class AIService {
   /**
-   * Check if local AI (Gemini Nano) is available
-   * TODO: Implement with chrome.ai.summarizer.capabilities()
+   * Check if local AI (Summarizer API with Gemini Nano) is available
    */
   static async isLocalAIAvailable(): Promise<boolean> {
     try {
-      // TODO: Replace with actual API call
-      // const capabilities = await chrome.ai.summarizer.capabilities();
-      // return capabilities.available !== 'no';
+      if (!('ai' in self) || !('summarizer' in (self as any).ai)) {
+        console.warn('[AI Service] Summarizer API not available in this browser');
+        return false;
+      }
 
-      console.log('[AI Service] Checking local AI availability...');
-      return true; // Placeholder
+      const capabilities = await (self as any).ai.summarizer.capabilities();
+      console.log('[AI Service] Summarizer capabilities:', capabilities);
+
+      return capabilities.available !== 'no';
     } catch (error) {
-      console.error('Error checking local AI availability:', error);
+      console.error('[AI Service] Error checking local AI availability:', error);
       return false;
     }
   }
 
   /**
-   * Check if cloud AI (Gemini 1.5 Pro) is available
-   * TODO: Implement with chrome.ai.languageModel.capabilities()
+   * Check if Prompt API (Gemini Nano) is available
    */
   static async isCloudAIAvailable(): Promise<boolean> {
     try {
-      // TODO: Replace with actual API call
-      // const capabilities = await chrome.ai.languageModel.capabilities();
-      // return capabilities.available !== 'no';
+      if (!('ai' in self) || !('languageModel' in (self as any).ai)) {
+        console.warn('[AI Service] Prompt API not available in this browser');
+        return false;
+      }
 
-      console.log('[AI Service] Checking cloud AI availability...');
-      return true; // Placeholder
+      const capabilities = await (self as any).ai.languageModel.capabilities();
+      console.log('[AI Service] Prompt API capabilities:', capabilities);
+
+      return capabilities.available !== 'no';
     } catch (error) {
-      console.error('Error checking cloud AI availability:', error);
+      console.error('[AI Service] Error checking Prompt API availability:', error);
       return false;
     }
   }
 
   /**
-   * Summarize text using local AI (Gemini Nano)
-   * TODO: Integrate Chrome AI Summarization API
+   * Summarize text using Summarizer API (Gemini Nano - on-device)
    */
   static async summarizeLocal(request: SummarizeRequest): Promise<SummarizeResponse> {
     try {
@@ -58,31 +62,38 @@ export class AIService {
         url: request.url,
       });
 
-      // TODO: Replace with actual Chrome AI Summarization API
-      /*
-      Example implementation:
+      // Check if API is available
+      const isAvailable = await this.isLocalAIAvailable();
+      if (!isAvailable) {
+        return {
+          success: false,
+          error: 'Summarizer API is not available. Please enable it in chrome://flags',
+        };
+      }
 
-      const summarizer = await chrome.ai.summarizer.create({
-        maxLength: 500,
+      // Check capabilities and handle model download if needed
+      const capabilities = await (self as any).ai.summarizer.capabilities();
+      if (capabilities.available === 'after-download') {
+        console.log('[AI Service] Model download required for Summarizer API');
+        // You could show a UI notification here
+      }
+
+      // Create summarizer instance
+      const summarizer = await (self as any).ai.summarizer.create({
+        type: 'key-points',
         format: 'plain',
-        type: 'key-points'
+        length: 'medium',
       });
 
+      console.log('[AI Service] Summarizer created, generating summary...');
+
+      // Generate summary
       const summary = await summarizer.summarize(request.text);
+
+      // Clean up
       summarizer.destroy();
 
-      return {
-        success: true,
-        summary,
-        mode: 'local',
-        timestamp: Date.now()
-      };
-      */
-
-      // Placeholder implementation
-      await this.simulateDelay(1000);
-
-      const summary = this.generatePlaceholderSummary(request.text, 'local');
+      console.log('[AI Service] Local summarization completed');
 
       return {
         success: true,
@@ -100,55 +111,63 @@ export class AIService {
   }
 
   /**
-   * Analyze text using cloud AI (Gemini 1.5 Pro)
-   * TODO: Integrate Chrome Cloud AI API
+   * Analyze text using Prompt API (Gemini Nano - deeper analysis)
    */
   static async analyzeCloud(request: SummarizeRequest): Promise<SummarizeResponse> {
     try {
-      console.log('[AI Service] Starting cloud analysis...', {
+      console.log('[AI Service] Starting deep analysis...', {
         textLength: request.text.length,
         url: request.url,
         hasCustomPrompt: !!request.prompt,
       });
 
-      // TODO: Replace with actual Chrome Cloud AI API
-      /*
-      Example implementation:
+      // Check if API is available
+      const isAvailable = await this.isCloudAIAvailable();
+      if (!isAvailable) {
+        return {
+          success: false,
+          error: 'Prompt API is not available. Please enable it in chrome://flags',
+        };
+      }
 
-      const session = await chrome.ai.languageModel.create({
-        systemPrompt: "You are an expert at analyzing and explaining web content. " +
-                     "Provide clear, concise, and insightful analysis.",
-        temperature: 0.7,
-        maxOutputTokens: 1024
+      // Check capabilities and handle model download if needed
+      const capabilities = await (self as any).ai.languageModel.capabilities();
+      if (capabilities.available === 'after-download') {
+        console.log('[AI Service] Model download required for Prompt API');
+        // You could show a UI notification here
+      }
+
+      // Create language model session
+      const session = await (self as any).ai.languageModel.create({
+        systemPrompt:
+          'You are an expert at analyzing and explaining web content. ' +
+          'Provide clear, concise, and insightful analysis with key takeaways. ' +
+          'Format your response in a readable way with bullet points where appropriate.',
       });
 
-      const prompt = request.prompt ||
-        `Analyze the following content and provide a comprehensive summary with key insights:\n\n${request.text}`;
+      console.log('[AI Service] Prompt API session created, analyzing...');
 
-      const response = await session.prompt(prompt);
+      // Create the prompt
+      const prompt =
+        request.prompt ||
+        `Analyze the following web content and provide a comprehensive summary with key insights and main takeaways:\n\n${request.text.slice(0, 4000)}`;
+
+      // Get analysis
+      const analysis = await session.prompt(prompt);
+
+      // Clean up
       session.destroy();
 
-      return {
-        success: true,
-        summary: response,
-        mode: 'cloud',
-        timestamp: Date.now()
-      };
-      */
-
-      // Placeholder implementation
-      await this.simulateDelay(2000);
-
-      const summary = this.generatePlaceholderSummary(request.text, 'cloud');
+      console.log('[AI Service] Deep analysis completed');
 
       return {
         success: true,
-        summary,
+        summary: analysis,
         mode: 'cloud',
         timestamp: Date.now(),
       };
     } catch (error) {
-      console.error('[AI Service] Cloud analysis error:', error);
+      console.error('[AI Service] Deep analysis error:', error);
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error',
@@ -157,32 +176,37 @@ export class AIService {
   }
 
   /**
-   * Stream analysis from cloud AI (for real-time responses)
-   * TODO: Implement streaming with chrome.ai.languageModel.streamPrompt()
+   * Stream analysis from Prompt API (for real-time responses)
    */
   static async *streamAnalysis(request: SummarizeRequest): AsyncGenerator<string> {
     try {
-      // TODO: Replace with actual streaming API
-      /*
-      const session = await chrome.ai.languageModel.create({
-        systemPrompt: "You are an expert at analyzing web content."
+      // Check if API is available
+      const isAvailable = await this.isCloudAIAvailable();
+      if (!isAvailable) {
+        throw new Error('Prompt API is not available');
+      }
+
+      // Create language model session
+      const session = await (self as any).ai.languageModel.create({
+        systemPrompt: 'You are an expert at analyzing web content.',
       });
 
-      const prompt = request.prompt || `Analyze: ${request.text}`;
+      const prompt =
+        request.prompt || `Analyze this content:\n\n${request.text.slice(0, 4000)}`;
 
-      for await (const chunk of session.streamPrompt(prompt)) {
+      console.log('[AI Service] Starting streaming analysis...');
+
+      // Stream the response
+      const stream = session.promptStreaming(prompt);
+
+      for await (const chunk of stream) {
         yield chunk;
       }
 
+      // Clean up
       session.destroy();
-      */
 
-      // Placeholder streaming
-      const words = this.generatePlaceholderSummary(request.text, 'cloud').split(' ');
-      for (const word of words) {
-        await this.simulateDelay(50);
-        yield word + ' ';
-      }
+      console.log('[AI Service] Streaming completed');
     } catch (error) {
       console.error('[AI Service] Streaming error:', error);
       throw error;
@@ -217,22 +241,4 @@ export class AIService {
     chrome.tts.stop();
   }
 
-  // ============================================================================
-  // Helper methods (for placeholder functionality)
-  // ============================================================================
-
-  private static async simulateDelay(ms: number): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, ms));
-  }
-
-  private static generatePlaceholderSummary(text: string, mode: AIMode): string {
-    const wordCount = text.split(/\s+/).length;
-    const charCount = text.length;
-
-    if (mode === 'local') {
-      return `⚡ LOCAL AI SUMMARY (Placeholder)\n\nThis is a placeholder for the Chrome AI Summarization API (Gemini Nano).\n\nAnalyzed content: ${wordCount} words, ${charCount} characters.\n\nKey points:\n• Fast on-device processing\n• No internet required\n• Privacy-focused local analysis\n• Powered by Gemini Nano\n\nTODO: Replace with actual chrome.ai.summarizer.create() call in src/services/ai.ts`;
-    } else {
-      return `☁️ CLOUD AI ANALYSIS (Placeholder)\n\nThis is a placeholder for the Chrome Cloud AI API (Gemini 1.5 Pro).\n\nAnalyzed content: ${wordCount} words, ${charCount} characters.\n\nDeep insights:\n• Comprehensive reasoning and analysis\n• Advanced language understanding\n• Contextual awareness across paragraphs\n• Powered by Gemini 1.5 Pro\n\nTODO: Replace with actual chrome.ai.languageModel.create() call in src/services/ai.ts`;
-    }
-  }
 }

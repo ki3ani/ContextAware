@@ -6,6 +6,7 @@ export default defineConfig({
   plugins: [react()],
   build: {
     outDir: 'dist',
+    emptyOutDir: true,
     rollupOptions: {
       input: {
         popup: resolve(__dirname, 'src/popup/index.html'),
@@ -25,7 +26,13 @@ export default defineConfig({
           return '[name]/[name].js';
         },
         chunkFileNames: 'assets/[name]-[hash].js',
-        assetFileNames: 'assets/[name]-[hash].[ext]',
+        assetFileNames: (assetInfo) => {
+          // Put content.css in content folder
+          if (assetInfo.name === 'content.css') {
+            return 'content/content.css';
+          }
+          return 'assets/[name]-[hash].[ext]';
+        },
       },
     },
   },

@@ -8,6 +8,8 @@
  * - Communicates with the background service worker
  */
 
+import './content.css';
+
 let sidebar: HTMLIFrameElement | null = null;
 let floatingButton: HTMLButtonElement | null = null;
 let isSidebarOpen = false;
@@ -128,7 +130,7 @@ function createSidebar() {
   sidebar = document.createElement('iframe');
   sidebar.id = 'contextaware-sidebar';
   sidebar.className = 'contextaware-sidebar';
-  sidebar.src = chrome.runtime.getURL('sidebar/index.html');
+  sidebar.src = chrome.runtime.getURL('src/sidebar/index.html');
 
   document.body.appendChild(sidebar);
 
